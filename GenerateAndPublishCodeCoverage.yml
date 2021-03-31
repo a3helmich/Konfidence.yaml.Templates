@@ -1,3 +1,5 @@
+steps:
+
 - script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Cobertura'
   displayName: 'Command Line Script generate code coverage'
   continueOnError: true
