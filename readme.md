@@ -1,0 +1,1 @@
+Some yml templates I use on my azure devops server. Needed by some published projects.    
