@@ -1,3 +1,6 @@
+variables:
+  disable.coverage.autogenerate: 'true'
+
 steps:
 
 - script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Cobertura'
@@ -10,5 +13,4 @@ steps:
     codeCoverageTool: Cobertura
     summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
     reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'
-    pathToSources: '$(System.DefaultWorkingDirectory)'
     
