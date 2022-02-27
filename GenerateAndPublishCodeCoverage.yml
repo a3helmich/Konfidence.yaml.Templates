@@ -4,10 +4,14 @@ steps:
 #- bash: echo "##vso[task.setvariable variable=disable.coverage.autogenerate]false"
 #  displayName: 'bash: set disable.coverage.autogenerate = false'
 
-- task: CmdLine@2
+- script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Badges;Cobertura'
   displayName: 'Command Line Script generate code coverage'
-  inputs:
-    script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Cobertura'
+  continueOnError: true
+
+# - task: CmdLine@2
+  # displayName: 'Command Line Script generate code coverage'
+  # inputs:
+  # script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Badges;Cobertura'
   
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage from $(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
