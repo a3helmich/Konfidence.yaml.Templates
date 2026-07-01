@@ -1,0 +1,31 @@
+
+steps:
+
+- bash: |
+    {
+
+    git branch -r \
+       | grep -v '\->' \
+       | grep -v 'origin/master' \
+       | grep -v 'origin/main' \
+       | while read origin;
+             do
+                echo + git checkout "${origin#origin/}";
+                git checkout "${origin#origin/}";
+
+                echo - git pull @github.com/a3helmich/Konfidence.$(Build.Repository.Name).git;
+                git pull https://$(GitHubToken)@github.com/a3helmich/Konfidence.$(Build.Repository.Name).git;
+
+                echo - git push @github.com/a3helmich/Konfidence.$(Build.Repository.Name).git "${origin#origin/}";
+                git push https://$(GitHubToken)@github.com/a3helmich/Konfidence.$(Build.Repository.Name).git "${origin#origin/}";
+
+                echo - checkout --detach;
+                git checkout --detach;
+             done;
+    }
+  displayName: 'Bash Script: push to github'
+  failOnStderr: false
+  noProfile: true
+  noRc: true
+  condition: succeededOrFailed()
+  continueOnError: true

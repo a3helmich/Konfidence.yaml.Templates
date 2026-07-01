@@ -6,6 +6,7 @@ steps:
 
 - script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Badges;Cobertura'
   displayName: 'Command Line Script generate code coverage'
+  condition: succeededOrFailed()
   continueOnError: true
 
 # - task: CmdLine@2
@@ -15,6 +16,8 @@ steps:
   
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage from $(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+  condition: succeededOrFailed()
+  continueOnError: true
   inputs:
     codeCoverageTool: Cobertura
     summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
