@@ -3,8 +3,9 @@ Some yml templates I use on my azure devops server. Needed by some published pro
 <h6>GenerateAndPublishCodeCoverage.yml</h6> 
 
 - requires the reportgenerator package 'dotnet tool update -g dotnet-reportgenerator-globaltool'. Which should be run at some point in time before the unit tests are executed.
-- tests should be run like 'dotnet test -c $(BuildConfiguration) --no-build  /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'.
-- the testprojects should contain the 'coverlet.msbuild' package. 
+- tests should be run like 'dotnet test -c $(BuildConfiguration) --no-build --collect:"XPlat Code Coverage"'.
+- coverage is picked up from `$(Agent.TempDirectory)/**/coverage.*`, i.e. wherever the VSTest coverlet data collector writes it — not from a project's own build output directory.
+- runs with `condition: succeeded()` and `continueOnError: false`, so it's skipped (and the job fails) if an earlier step already failed.
 
 <h6>PublishKonfidenceToGithub.yml</h6>
 
