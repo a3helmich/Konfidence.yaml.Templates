@@ -16,8 +16,8 @@ steps:
          | grep -v 'origin/main' \
          | while read origin;
                do
-                  echo + git checkout "${origin#origin/}";
-                  git checkout "${origin#origin/}";
+                  echo + git checkout -B "${origin#origin/}" "$origin";
+                  git checkout -B "${origin#origin/}" "$origin";
 
                   echo - git pull @github.com/a3helmich/Konfidence.$(Build.Repository.Name).git;
                   git pull https://$(GitHubToken)@github.com/a3helmich/Konfidence.$(Build.Repository.Name).git;
