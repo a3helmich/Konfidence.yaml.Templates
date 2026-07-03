@@ -14,6 +14,9 @@ schedules:
     - develop
   always: true
 
+variables:
+- group: GitHubTokens
+
 pool:
   name: Default
 
