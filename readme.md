@@ -5,3 +5,11 @@ Some yml templates I use on my azure devops server. Needed by some published pro
 - requires the reportgenerator package 'dotnet tool update -g dotnet-reportgenerator-globaltool'. Which should be run at some point in time before the unit tests are executed.
 - tests should be run like 'dotnet test -c $(BuildConfiguration) --no-build  /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura'.
 - the testprojects should contain the 'coverlet.msbuild' package. 
+
+<h6>PublishKonfidenceToGithub.yml</h6>
+
+- pushes every branch (except 'master'/'main') to `https://github.com/a3helmich/Konfidence.$(Build.Repository.Name).git`.
+- requires a `GitHubToken` variable (Variable Group `GitHubTokens`) authorized for the calling pipeline.
+- calling pipeline's checkout step needs `fetchDepth: 0` (full history), since every branch is pushed.
+- runs with `condition: succeededOrFailed()` and `continueOnError: true`, so it still runs (and won't fail the job) even if an earlier step in the pipeline failed.
+
