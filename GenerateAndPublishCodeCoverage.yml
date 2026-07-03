@@ -1,26 +1,23 @@
 
 steps:
 
-#- bash: echo "##vso[task.setvariable variable=disable.coverage.autogenerate]true"
-#  displayName: 'bash: set disable.coverage.autogenerate = true'
-
-- script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Badges;Cobertura'
+- task: CmdLine@2
   displayName: 'Command Line Script generate code coverage'
-  condition: succeededOrFailed()
-  continueOnError: true
+  condition: succeeded()
+  continueOnError: false
+  inputs:
+    script: 'reportgenerator -reports:$(Agent.TempDirectory)/**/coverage.* -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Cobertura'
+    workingDirectory: ''
+    failOnStderr: false
 
-# - task: CmdLine@2
-  # displayName: 'Command Line Script generate code coverage'
-  # inputs:
-  # script: 'reportgenerator -reports:$(Build.SourcesDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Badges;Cobertura'
-  
 - task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage from $(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
-  condition: succeededOrFailed()
-  continueOnError: true
+  condition: succeeded()
+  continueOnError: false
   inputs:
     codeCoverageTool: Cobertura
     summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
     pathToSources: $(Build.SourcesDirectory)
     reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'
-    
+    additionalCodeCoverageFiles: ''
+    failIfCoverageEmpty: false
