@@ -1,0 +1,25 @@
+name: $(date:yyyyMMdd)$(rev:.r)
+
+trigger:
+  batch: false
+  branches:
+    include:
+    - develop
+
+schedules:
+- cron: '0 4 * * *'  # 05:00 W. Europe Standard Time (UTC+1)
+  displayName: Nightly publish to GitHub
+  branches:
+    include:
+    - develop
+  always: true
+
+pool:
+  name: Default
+
+steps:
+- checkout: self
+  clean: true
+  fetchDepth: 0
+
+- template: PublishKonfidenceToGithub.yml
