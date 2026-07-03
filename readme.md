@@ -17,5 +17,5 @@ Some yml templates I use on my azure devops server. Needed by some published pro
 <h6>azure-pipelines-github.yml</h6>
 
 - this repo's own pipeline for publishing itself to GitHub. Calls `PublishKonfidenceToGithub.yml` locally (same repo, no `resources: repositories` needed).
-- registered as Build definition `yamlTemplatesGithubYaml` (id 128). Replaces the classic build definition `yaml templates to github` (id 109), which is disabled but kept for rollback.
+
 
