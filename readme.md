@@ -6,7 +6,7 @@ Some yml templates I use on my azure devops server. Needed by some published pro
 - tests should be run like 'dotnet test -c $(BuildConfiguration) --no-build --collect:"XPlat Code Coverage"'.
 - coverage is picked up from `$(Agent.TempDirectory)/**/coverage.*`, i.e. wherever the VSTest coverlet data collector writes it — not from a project's own build output directory.
 - runs with `condition: succeeded()` and `continueOnError: false`, so it's skipped (and the job fails) if an earlier step already failed.
-- uses `PublishCodeCoverageResults@2` (upgraded 2026-07-03 from the deprecated `@1`). v2 has a simpler input schema than v1: no `codeCoverageTool` (auto-detected from the file), no `reportDirectory`, no `additionalCodeCoverageFiles` — it builds its own coverage report internally rather than taking a pre-built one. If this ever needs rolling back, `@1`'s inputs are in git history (also required `codeCoverageTool: Cobertura`, `reportDirectory`, `additionalCodeCoverageFiles: ''`).
+- uses `PublishCodeCoverageResults@1`, not `@2`. `@1` is deprecated but `@2` **does not work on this server**: v2 spins up a separate `CoveragePublisher.Console.exe` that connects back to the Azure DevOps server itself over Basic/PAT auth, and that tool hard-refuses to do so over plain HTTP (`System.InvalidOperationException: Basic authentication requires a secure connection to the server`). This server is `http://tfs.konfidence.nl:8080` (no TLS), so v2 will always fail here until/unless the server gets HTTPS. Tried and reverted 2026-07-04 — don't re-attempt the `@2` upgrade without HTTPS on the server first.
 
 <h6>PublishKonfidenceToGithub.yml</h6>
 

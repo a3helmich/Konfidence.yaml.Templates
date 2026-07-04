@@ -10,11 +10,14 @@ steps:
     workingDirectory: ''
     failOnStderr: false
 
-- task: PublishCodeCoverageResults@2
+- task: PublishCodeCoverageResults@1
   displayName: 'Publish code coverage from $(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
   condition: succeeded()
   continueOnError: false
   inputs:
+    codeCoverageTool: Cobertura
     summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
     pathToSources: $(Build.SourcesDirectory)
+    reportDirectory: '$(Build.SourcesDirectory)/CodeCoverage'
+    additionalCodeCoverageFiles: ''
     failIfCoverageEmpty: false
