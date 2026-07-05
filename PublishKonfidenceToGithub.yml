@@ -1,3 +1,7 @@
+parameters:
+- name: githubPrefix
+  type: string
+  default: Konfidence
 
 steps:
 
@@ -19,11 +23,11 @@ steps:
                   echo + git checkout -B "${origin#origin/}" "$origin";
                   git checkout -B "${origin#origin/}" "$origin";
 
-                  echo - git pull @github.com/a3helmich/Konfidence.$(Build.Repository.Name).git;
-                  git pull https://$(GitHubToken)@github.com/a3helmich/Konfidence.$(Build.Repository.Name).git;
+                  echo - git pull @github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git;
+                  git pull https://$(GitHubToken)@github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git;
 
-                  echo - git push @github.com/a3helmich/Konfidence.$(Build.Repository.Name).git "${origin#origin/}";
-                  git push https://$(GitHubToken)@github.com/a3helmich/Konfidence.$(Build.Repository.Name).git "${origin#origin/}";
+                  echo - git push @github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git "${origin#origin/}";
+                  git push https://$(GitHubToken)@github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git "${origin#origin/}";
 
                   echo - checkout --detach;
                   git checkout --detach;
