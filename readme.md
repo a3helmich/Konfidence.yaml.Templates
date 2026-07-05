@@ -40,7 +40,7 @@ Some yml templates I use on my azure devops server. Needed by some published pro
 - `year` is the current calendar year, computed automatically from `pipeline.startTime`.
 - `minorVersion` uses Azure Pipelines' `counter()` expression keyed on `year.majorVersion` (e.g. `"2026.1"`) — this means the counter automatically starts fresh at 1 whenever the key changes, which happens for free both when `majorVersion` is bumped **and** when the year rolls over, with no extra logic needed.
 - the counter increments on **every** run that evaluates it — including PR validation builds, not just real merges to `develop`. This means the published version sequence can have gaps (e.g. jump from `.5` to `.8`) if PR validations happened in between, but a package is never actually published for those skipped numbers. Accepted as a deliberate simplicity trade-off over building a custom, strictly-gapless counter.
-- usage in the calling pipeline: reference the three variables directly, e.g. `buildProperties: 'PackageVersion=$(year).$(majorVersion).$(minorVersion)'` on the `dotnet pack` step.
+- usage in the calling pipeline: pass `/p:Version=$(year).$(majorVersion).$(minorVersion)` on the `dotnet build` step's `arguments` (so it's baked into the compiled assembly's version metadata), and `buildProperties: 'Version=$(year).$(majorVersion).$(minorVersion)'` on the `dotnet pack` step (since `--nobuild` packs don't re-evaluate the build step's properties) — using the same `Version` property (not `PackageVersion`) on both keeps the DLL's assembly version and the NuGet package version identical. A static `<Version>` in `Directory.Build.props` (if present) is overridden by this at build/pack time; it only matters for local, non-CI builds.
 
 <h6>azure-pipelines-github.yml</h6>
 
