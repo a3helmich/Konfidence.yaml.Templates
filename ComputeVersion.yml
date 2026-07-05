@@ -1,0 +1,11 @@
+parameters:
+- name: majorVersion
+  type: number
+
+variables:
+- name: majorVersion
+  value: ${{ parameters.majorVersion }}
+- name: year
+  value: $[format('{0:yyyy}', pipeline.startTime)]
+- name: minorVersion
+  value: $[counter(format('{0}.{1}', variables['year'], variables['majorVersion']), 1)]

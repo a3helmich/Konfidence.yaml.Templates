@@ -32,6 +32,16 @@ Some yml templates I use on my azure devops server. Needed by some published pro
 - runs with `condition: succeededOrFailed()` and `continueOnError: true`, so it still runs (and won't fail the job) even if an earlier step in the pipeline failed.
 - checks out each branch with `git checkout -B <branch> <origin/branch>` (force-reset), not plain `git checkout <branch>` — required because self-hosted agents reuse their working directory across runs, so a plain checkout of an already-existing local branch would freeze it at whatever commit it had from a *previous* run instead of advancing it to match origin's current state. Found 2026-07-03 after this silently stopped updating GitHub's `develop` branch for several runs.
 
+<h6>ComputeVersion.yml</h6>
+
+- **variables template** (not a steps template — included via `variables: - template: ComputeVersion.yml@templates`, not `steps:`), added 2026-07-05. Needed because `counter()` runtime expressions can only be used inside a `variables:` block, not from within a steps template.
+- computes a `year.majorVersion.minorVersion` package version (CalVer-style), e.g. `2026.1.42`.
+- `majorVersion` is a required parameter, set by the calling pipeline — a human-maintained value: `1` at the start of each year, bumped manually mid-year only for a deliberate major-version change.
+- `year` is the current calendar year, computed automatically from `pipeline.startTime`.
+- `minorVersion` uses Azure Pipelines' `counter()` expression keyed on `year.majorVersion` (e.g. `"2026.1"`) — this means the counter automatically starts fresh at 1 whenever the key changes, which happens for free both when `majorVersion` is bumped **and** when the year rolls over, with no extra logic needed.
+- the counter increments on **every** run that evaluates it — including PR validation builds, not just real merges to `develop`. This means the published version sequence can have gaps (e.g. jump from `.5` to `.8`) if PR validations happened in between, but a package is never actually published for those skipped numbers. Accepted as a deliberate simplicity trade-off over building a custom, strictly-gapless counter.
+- usage in the calling pipeline: reference the three variables directly, e.g. `buildProperties: 'PackageVersion=$(year).$(majorVersion).$(minorVersion)'` on the `dotnet pack` step.
+
 <h6>azure-pipelines-github.yml</h6>
 
 - this repo's own pipeline for publishing itself to GitHub. Calls `PublishKonfidenceToGithub.yml` locally (same repo, no `resources: repositories` needed).
