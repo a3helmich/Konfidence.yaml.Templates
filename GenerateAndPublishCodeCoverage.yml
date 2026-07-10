@@ -1,20 +1,25 @@
+parameters:
+- name: generateReport
+  type: boolean
+  default: true
 
 steps:
 
-- task: CmdLine@2
-  displayName: 'Command Line Script generate code coverage'
-  condition: succeeded()
-  continueOnError: false
-  inputs:
-    script: 'reportgenerator -reports:$(Agent.TempDirectory)/**/coverage.* -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Cobertura'
-    workingDirectory: ''
-    failOnStderr: false
+- ${{ if eq(parameters.generateReport, true) }}:
+  - task: CmdLine@2
+    displayName: 'Command Line Script generate code coverage'
+    condition: succeeded()
+    continueOnError: false
+    inputs:
+      script: 'reportgenerator -reports:$(Agent.TempDirectory)/**/coverage.* -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:HtmlInline_AzurePipelines;Cobertura'
+      workingDirectory: ''
+      failOnStderr: false
 
-- task: PublishCodeCoverageResults@2
-  displayName: 'Publish code coverage from $(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
-  condition: succeeded()
-  continueOnError: false
-  inputs:
-    summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
-    pathToSources: $(Build.SourcesDirectory)
-    failIfCoverageEmpty: false
+  - task: PublishCodeCoverageResults@2
+    displayName: 'Publish code coverage from $(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+    condition: succeeded()
+    continueOnError: false
+    inputs:
+      summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+      pathToSources: $(Build.SourcesDirectory)
+      failIfCoverageEmpty: false
