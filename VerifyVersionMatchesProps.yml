@@ -1,0 +1,64 @@
+parameters:
+- name: propsPath
+  type: string
+  default: 'Directory.Build.props'
+
+steps:
+
+# The published version and <Version> in Directory.Build.props are maintained separately and cannot
+# be derived from one another: majorVersion is a template parameter, resolved before any step runs,
+# so no runtime value can feed it. The props file only stamps local builds - CI passes
+# /p:Version=... which overrides it - which is exactly why drift here goes unnoticed. This fails the
+# build when they disagree.
+# Year and major are compared; the minor is not. The pipeline's minorVersion is a counter that
+# increments on every run, so it would match the props file exactly once and be wrong from the
+# second build onward. The props file's minor is a separate, hand-maintained number.
+# Note the year check fails by design each 1 January: the pipeline's year rolls over on its own
+# while the props file cannot, and NuGet reads that leading segment as the semver major - so the
+# repo must not keep claiming last year's version once a new one is being published.
+- task: PowerShell@2
+  displayName: 'Verify version matches Directory.Build.props'
+  inputs:
+    targetType: inline
+    script: |
+      $propsPath = Join-Path '$(Build.SourcesDirectory)' '${{ parameters.propsPath }}'
+      $content = Get-Content -Raw -LiteralPath $propsPath
+
+      if ($content -notmatch '<Version>\s*(\d+)\.(\d+)\.(\d+)\s*</Version>') {
+          Write-Host "##vso[task.logissue type=error]Could not read a <Version> of the form year.major.minor from $propsPath"
+          exit 1
+      }
+
+      $propsVersion = $Matches[0]
+      $propsYear = [int]$Matches[1]
+      $propsMajor = [int]$Matches[2]
+
+      $pipelineYear = [int]'$(year)'
+      $pipelineMajor = [int]'$(majorVersion)'
+
+      $problems = @()
+
+      if ($propsYear -ne $pipelineYear) {
+          $problems += "year: props has $propsYear, pipeline has $pipelineYear"
+      }
+
+      if ($propsMajor -ne $pipelineMajor) {
+          $problems += "major: props has $propsMajor, pipeline majorVersion is $pipelineMajor"
+      }
+
+      if ($problems.Count -gt 0) {
+          $detail = $problems -join '; '
+
+          if ($propsYear -ne $pipelineYear) {
+              # A new year restarts the major at 1 by convention (see yaml.Templates/readme.md, and
+              # the history: 2021.1.0, 2022.1.0, 2024.1.0). Nothing automates that - majorVersion is
+              # a template parameter - so both files have to be edited by hand.
+              Write-Host "##vso[task.logissue type=error]Version mismatch ($detail). The year has rolled over to $pipelineYear. By convention the major restarts at 1 for a new year, so set 'majorVersion: 1' in azure-pipelines.yml AND <Version> to $pipelineYear.1.1 in Directory.Build.props. Directory.Build.props currently reads $propsVersion."
+              exit 1
+          }
+
+          Write-Host "##vso[task.logissue type=error]Version mismatch ($detail). Directory.Build.props reads $propsVersion but this build publishes $pipelineYear.$pipelineMajor.$(minorVersion). Update <Version> in Directory.Build.props to $pipelineYear.$pipelineMajor.1 before publishing."
+          exit 1
+      }
+
+      Write-Host "Directory.Build.props ($propsVersion) matches this build's $pipelineYear.$pipelineMajor line."
