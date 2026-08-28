@@ -1,0 +1,72 @@
+parameters:
+- name: solution
+  type: string
+  default: ''
+- name: condition
+  type: string
+  default: "eq(variables['Build.Reason'], 'PullRequest')"
+
+steps:
+
+# Konfidence.Project-References reports project and package references a project already gets
+# another way - through a project it references, or through another package. Updated rather than
+# installed so every run uses the current version; "dotnet tool update -g" installs it when absent.
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet tool update Project-References'
+  condition: ${{ parameters.condition }}
+  inputs:
+    command: custom
+    custom: tool
+    arguments: 'update -g Konfidence.Project-References'
+
+# The tool always exits 0 - its entry point is an async Task Main with no return value - so it
+# cannot fail a build by itself. What it does do is write redundant.txt when it finds something and
+# delete a stale one when the solution is clean, so the file's existence is the signal, and turning
+# that into a failure is this step's whole job.
+#
+# Pass the "solution" parameter unless the repository's solution happens to be named after its
+# folder: with no --Solution the tool looks for a solution named after the working folder, which on
+# an agent is the checkout folder (typically "s"). Without it the run reports
+# "not found : solution file" and would otherwise pass silently forever.
+#
+# The report is written to the current working directory, not to --BasePath, hence the explicit
+# workingDirectory below.
+#
+# Place this after the tests, so test results and coverage still publish when the gate fails, and
+# before any pack/publish steps, so a finding stops artifacts being published. The default condition
+# limits it to PR validation builds - the merge signal for repositories whose pipeline has
+# "trigger: none" - so it reports while a change can still be revised. Pass a different condition to
+# widen or narrow that.
+- task: PowerShell@2
+  displayName: 'Check for redundant project/package references'
+  condition: ${{ parameters.condition }}
+  inputs:
+    targetType: inline
+    workingDirectory: '$(Build.SourcesDirectory)'
+    script: |
+      $solution = '${{ parameters.solution }}'
+
+      if ($solution) {
+          Project-References --Solution=$solution
+      }
+      else {
+          Project-References
+      }
+
+      $reportFile = Join-Path '$(Build.SourcesDirectory)' 'redundant.txt'
+
+      if (-not (Test-Path $reportFile)) {
+          Write-Host 'No redundant project or package references.'
+
+          exit 0
+      }
+
+      Write-Host 'Redundant project/package references found:'
+      Write-Host ''
+
+      Get-Content $reportFile | ForEach-Object { Write-Host $_ }
+
+      Write-Host ''
+      Write-Host "##vso[task.logissue type=error]Redundant project/package references found - see the listing above. Remove them, or keep a deliberately pinned package reference and re-run."
+
+      exit 1
