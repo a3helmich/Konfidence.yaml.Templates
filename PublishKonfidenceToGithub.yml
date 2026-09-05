@@ -8,70 +8,38 @@ parameters:
 
 steps:
 
-- ${{ if ne(parameters.githubRepoNameOverride, '') }}:
-  - task: Bash@3
-    displayName: 'Bash Script: push to github'
-    condition: succeededOrFailed()
-    continueOnError: true
-    inputs:
-      targetType: inline
-      script: |
-        {
+- bash: echo "##vso[task.setvariable variable=githubRepoName]${{ coalesce(parameters.githubRepoNameOverride, format('{0}.$(Build.Repository.Name)', parameters.githubPrefix)) }}"
+  displayName: 'Determine GitHub repo name'
 
-        git branch -r \
-           | grep -v '\->' \
-           | grep -v 'origin/master' \
-           | grep -v 'origin/main' \
-           | while read origin;
-                 do
-                    echo + git checkout -B "${origin#origin/}" "$origin";
-                    git checkout -B "${origin#origin/}" "$origin";
+- task: Bash@3
+  displayName: 'Bash Script: push to github'
+  condition: succeededOrFailed()
+  continueOnError: true
+  inputs:
+    targetType: inline
+    script: |
+      {
 
-                    echo - git pull @github.com/a3helmich/${{ parameters.githubRepoNameOverride }}.git;
-                    git pull https://$(GitHubToken)@github.com/a3helmich/${{ parameters.githubRepoNameOverride }}.git;
+      git branch -r \
+         | grep -v '\->' \
+         | grep -v 'origin/master' \
+         | grep -v 'origin/main' \
+         | while read origin;
+               do
+                  echo + git checkout -B "${origin#origin/}" "$origin";
+                  git checkout -B "${origin#origin/}" "$origin";
 
-                    echo - git push @github.com/a3helmich/${{ parameters.githubRepoNameOverride }}.git "${origin#origin/}";
-                    git push https://$(GitHubToken)@github.com/a3helmich/${{ parameters.githubRepoNameOverride }}.git "${origin#origin/}";
+                  echo - git pull @github.com/a3helmich/$(githubRepoName).git;
+                  git pull https://$(GitHubToken)@github.com/a3helmich/$(githubRepoName).git;
 
-                    echo - checkout --detach;
-                    git checkout --detach;
-                 done;
-        }
-      workingDirectory: ''
-      failOnStderr: false
-      noProfile: true
-      noRc: true
+                  echo - git push @github.com/a3helmich/$(githubRepoName).git "${origin#origin/}";
+                  git push https://$(GitHubToken)@github.com/a3helmich/$(githubRepoName).git "${origin#origin/}";
 
-- ${{ else }}:
-  - task: Bash@3
-    displayName: 'Bash Script: push to github'
-    condition: succeededOrFailed()
-    continueOnError: true
-    inputs:
-      targetType: inline
-      script: |
-        {
-
-        git branch -r \
-           | grep -v '\->' \
-           | grep -v 'origin/master' \
-           | grep -v 'origin/main' \
-           | while read origin;
-                 do
-                    echo + git checkout -B "${origin#origin/}" "$origin";
-                    git checkout -B "${origin#origin/}" "$origin";
-
-                    echo - git pull @github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git;
-                    git pull https://$(GitHubToken)@github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git;
-
-                    echo - git push @github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git "${origin#origin/}";
-                    git push https://$(GitHubToken)@github.com/a3helmich/${{ parameters.githubPrefix }}.$(Build.Repository.Name).git "${origin#origin/}";
-
-                    echo - checkout --detach;
-                    git checkout --detach;
-                 done;
-        }
-      workingDirectory: ''
-      failOnStderr: false
-      noProfile: true
-      noRc: true
+                  echo - checkout --detach;
+                  git checkout --detach;
+               done;
+      }
+    workingDirectory: ''
+    failOnStderr: false
+    noProfile: true
+    noRc: true
